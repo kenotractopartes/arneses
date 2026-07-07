@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arneses Taller — Tracto Partes Magaña</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23171410'/%3E%3Ccircle cx='50' cy='50' r='28' fill='none' stroke='%23b03a2e' stroke-width='6'/%3E%3Ccircle cx='50' cy='36' r='6' fill='%23e8a020'/%3E%3Ccircle cx='37' cy='58' r='6' fill='%23e8a020'/%3E%3Ccircle cx='63' cy='58' r='6' fill='%23e8a020'/%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f3f4f6; color: #1a1a1a; font-size: 14px; -webkit-font-smoothing: antialiased; height: 100vh; overflow: hidden; }
+
+  /* LAYOUT PRINCIPAL */
+  .app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+
+  /* HEADER */
+  .header { background: #0f0f0f; color: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.15); z-index: 100; }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+  .header .sub { font-size: 12px; color: #aaa; }
+
+  /* Badge sincronización */
+  .sync-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-left:8px; transition: all .3s; }
+  .sync-dot { width:7px; height:7px; border-radius:50%; }
+  .sync-connecting { background:rgba(251,191,36,.15); color:#fbbf24; border:1px solid rgba(251,191,36,.3); }
+  .sync-connecting .sync-dot { background:#fbbf24; animation: pulse 1.2s infinite; }
+  .sync-online { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.3); }
+  .sync-online .sync-dot { background:#22c55e; box-shadow: 0 0 8px rgba(34,197,94,.6); }
+  .sync-offline { background:rgba(239,68,68,.15); color:#ef4444; border:1px solid rgba(239,68,68,.3); }
+  .sync-offline .sync-dot { background:#ef4444; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .header-btn { padding: 7px 14px; background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 7px; font-size: 12px; cursor: pointer; font-weight: 500; transition: background .15s; }
+  .header-btn:hover { background: rgba(255,255,255,.18); }
+  .header-btn.danger { background: rgba(214,40,40,.15); border-color: rgba(214,40,40,.4); color: #ff8585; }
+  .header-btn.danger:hover { background: rgba(214,40,40,.3); }
+  .kbd { font-family: 'Courier New', monospace; font-size: 11px; padding: 1px 5px; background: rgba(255,255,255,.12); border-radius: 3px; margin-left: 5px; }
+
+  /* MAIN CONTENT: 2 columnas */
+  .main { display: grid; grid-template-columns: 380px 1fr; height: 100%; overflow: hidden; }
+
+  /* SIDEBAR IZQUIERDO */
+  .sidebar { background: #fff; border-right: 1px solid #e5e7eb; overflow-y: auto; padding: 20px; }
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+
+  /* BUSCADOR */
+  .search-box { position: relative; }
+  .search-input { width: 100%; padding: 11px 14px 11px 38px; font-size: 14px; border: 2px solid #e5e7eb; border-radius: 8px; outline: none; background: #f9fafb; font-weight: 500; transition: all .15s; }
+  .search-input:focus { border-color: #d62828; background: #fff; box-shadow: 0 0 0 3px rgba(214,40,40,.1); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 16px; }
+  .search-shortcut { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-family: 'Courier New', monospace; font-size: 11px; padding: 2px 6px; background: #f3f4f6; color: #6b7280; border-radius: 4px; pointer-events: none; }
+
+  /* RESULTADO BÚSQUEDA */
+  .result-card { background: linear-gradient(135deg, #d62828 0%, #a91d1d 100%); color: #fff; padding: 16px; border-radius: 10px; margin-top: 12px; box-shadow: 0 3px 10px rgba(214,40,40,.2); }
+  .result-card.empty { background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); }
+  .result-card.motor { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); box-shadow: 0 3px 10px rgba(217,119,6,.2); }
+  .result-card.inyector { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); box-shadow: 0 3px 10px rgba(37,99,235,.2); }
+  .result-card .label { font-size: 11px; opacity: .85; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; font-weight: 600; }
+  .result-card .ubicacion { font-size: 24px; font-weight: 800; line-height: 1.1; margin-bottom: 4px; }
+  .result-card .descripcion { font-size: 14px; opacity: .95; }
+  .result-mini { background: rgba(255,255,255,.13); padding: 8px 12px; border-radius: 6px; margin-top: 6px; cursor: pointer; transition: background .15s; }
+  .result-mini:hover { background: rgba(255,255,255,.22); }
+  .result-mini .ub { font-weight: 700; font-size: 14px; }
+  .result-mini .desc { font-size: 12px; opacity: .9; margin-top: 1px; }
+
+  /* FORMULARIO */
+  .form-grid { display: grid; gap: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 11px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: .5px; }
+  .form-group input, .form-group select { width: 100%; padding: 9px 11px; font-size: 14px; border: 1.5px solid #e5e7eb; border-radius: 7px; background: #fff; transition: all .15s; }
+  .form-group input:focus, .form-group select:focus { border-color: #d62828; outline: none; box-shadow: 0 0 0 3px rgba(214,40,40,.08); }
+
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* TIPO SELECTOR */
+  .tipo-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .tipo-btn { padding: 10px 6px; background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 7px; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer; transition: all .15s; }
+  .tipo-btn:hover { background: #f3f4f6; }
+  .tipo-btn.active[data-tipo="FABRICANTE"] { background: #fef2f2; border-color: #d62828; color: #d62828; }
+  .tipo-btn.active[data-tipo="MOTOR"] { background: #fffbeb; border-color: #b8860b; color: #92400e; }
+  .tipo-btn.active[data-tipo="INYECTOR"] { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; }
+
+  /* CHIPS */
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; max-height: 80px; overflow-y: auto; padding: 2px; }
+  .chip { background: #f3f4f6; border: 1px solid #e5e7eb; color: #374151; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500; transition: all .15s; }
+  .chip:hover { background: #e5e7eb; }
+  .chip.selected { background: #d62828; border-color: #d62828; color: #fff; }
+  .chip.new { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+  .chip.new::before { content: '✨ '; }
+  .chip.new:hover { background: #fef3c7; }
+
+  /* BOTÓN PRINCIPAL */
+  .btn-primary { width: 100%; padding: 11px; background: #d62828; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s; }
+  .btn-primary:hover { background: #b91c1c; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(214,40,40,.3); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary { padding: 8px 14px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+  .btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
+
+  /* ÁREA PRINCIPAL DERECHA */
+  .content { overflow-y: auto; padding: 20px 28px; background: #f3f4f6; }
+  .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 16px; }
+  .content-title { font-size: 20px; font-weight: 700; }
+  .content-actions { display: flex; gap: 8px; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 16px 18px; border: 1px solid #e5e7eb; }
+  .stat-val { font-size: 28px; font-weight: 800; line-height: 1; }
+  .stat-val.fab { color: #d62828; }
+  .stat-val.mot { color: #b8860b; }
+  .stat-val.iny { color: #2563eb; }
+  .stat-val.tot { color: #1f2937; }
+  .stat-val.sal { color: #6b7280; }
+  .stat-lbl { font-size: 11px; color: #6b7280; margin-top: 6px; text-transform: uppercase; letter-spacing: .6px; font-weight: 600; }
+
+  /* FILTROS */
+  .filters { display: flex; gap: 6px; margin-bottom: 16px; }
+  .filter-btn { padding: 7px 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 20px; font-size: 13px; font-weight: 600; color: #4b5563; cursor: pointer; transition: all .15s; }
+  .filter-btn:hover { background: #f9fafb; }
+  .filter-btn.active { background: #0f0f0f; color: #fff; border-color: #0f0f0f; }
+
+  /* GRID DE ZONAS */
+  .zones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .zone-block { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
+  .zone-header { padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; }
+  .zone-name { font-size: 13px; font-weight: 700; color: #1f2937; }
+  .zone-count { background: #1f2937; color: #fff; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .zone-items { max-height: 380px; overflow-y: auto; }
+
+  .arnes-row { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f3f4f6; align-items: center; transition: background .12s; }
+  .arnes-row:hover { background: #fafafa; }
+  .arnes-row:last-child { border-bottom: none; }
+  .arnes-row.motor { border-left: 3px solid #b8860b; }
+  .arnes-row.fabricante { border-left: 3px solid #d62828; }
+  .arnes-row.inyector { border-left: 3px solid #2563eb; }
+
+  .arnes-num { background: #1f2937; color: #fff; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .arnes-desc { font-size: 13px; font-weight: 600; color: #1f2937; }
+  .arnes-meta { font-size: 11px; color: #6b7280; margin-top: 1px; display: flex; gap: 6px; align-items: center; }
+  .tipo-tag { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: .3px; text-transform: uppercase; }
+  .tipo-tag.fab { background: #fef2f2; color: #d62828; }
+  .tipo-tag.mot { background: #fef3c7; color: #92400e; }
+  .tipo-tag.iny { background: #dbeafe; color: #1d4ed8; }
+  .arnes-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+  .arnes-row:hover .arnes-actions { opacity: 1; }
+  .btn-icon { background: transparent; border: 1px solid #e5e7eb; color: #6b7280; width: 28px; height: 28px; border-radius: 5px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .btn-icon:hover { background: #f3f4f6; }
+  .btn-icon.danger:hover { background: #fef2f2; color: #d62828; border-color: #fecaca; }
+
+  /* EMPTY */
+  .empty-zone { padding: 28px 16px; text-align: center; color: #9ca3af; font-size: 12px; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+  .modal p { font-size: 13px; color: #4b5563; line-height: 1.5; white-space: pre-line; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  .modal-actions .btn-primary { width: auto; padding: 9px 20px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 28px; background: #0f0f0f; color: #fff; padding: 11px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transform: translateY(20px); transition: all .3s ease; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { background: #16a34a; }
+  .toast.error { background: #d62828; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+  /* RESPONSIVE — laptop chica */
+  @media (max-width: 1100px) {
+    .main { grid-template-columns: 340px 1fr; }
+    .zones-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 800px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+
+<!-- Firebase SDK (Realtime Database) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>🔧 Arneses Taller</h1>
+      <span class="sub">Tracto Partes Magaña · Cuarto de arneses</span>
+      <span id="syncStatus" class="sync-badge sync-connecting" title="Estado de sincronización">
+        <span class="sync-dot"></span><span class="sync-txt">Conectando…</span>
+      </span>
+    </div>
+    <div class="header-right">
+      <button class="header-btn" onclick="exportarExcel()">📊 Excel</button>
+      <button class="header-btn" onclick="exportarPDF()">📄 PDF</button>
+      <button class="header-btn" onclick="exportarJSON()">💾 Respaldo</button>
+      <button class="header-btn" onclick="document.getElementById('importFile').click()">📥 Importar</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
+      <button class="header-btn danger" onclick="mostrarMenuPeligroso()">⚠️</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- SIDEBAR IZQUIERDO -->
+    <div class="sidebar">
+
+      <!-- BUSCADOR -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">🔍 Buscar arnés</div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="buscador" placeholder="ISX, N14, Cascadia, KW..." oninput="buscar()" autocomplete="off">
+          <span class="search-shortcut">/</span>
+        </div>
+        <div id="resultado-busqueda"></div>
+      </div>
+
+      <!-- FORMULARIO NUEVO ARNÉS -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">➕ Agregar arnés <span class="kbd" style="background:#f3f4f6; color:#6b7280;">Enter para guardar</span></div>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>Tipo</label>
+            <div class="tipo-selector">
+              <button type="button" class="tipo-btn active" data-tipo="FABRICANTE" onclick="setTipo('FABRICANTE')">🔧 Fabricante</button>
+              <button type="button" class="tipo-btn" data-tipo="MOTOR" onclick="setTipo('MOTOR')">⚙️ Motor</button>
+              <button type="button" class="tipo-btn" data-tipo="INYECTOR" onclick="setTipo('INYECTOR')">💉 Inyector</button>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Ubicación</label>
+              <select id="f-zona" onchange="updateNumeroSugerido()">
+                <option value="TUBO_PRINCIPAL">Tubo principal</option>
+                <option value="TUBO_CRUZADO">Tubo cruzado</option>
+                <option value="PARED_1">Pared 1</option>
+                <option value="PARED_2">Pared 2</option>
+                <option value="PARED_3">Pared 3</option>
+                <option value="PARED_4">Pared 4</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Número</label>
+              <input type="number" id="f-numero" placeholder="32" min="1">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Marca</label>
+            <input type="text" id="f-marca" placeholder="KW, Inter, Cascadia..." autocomplete="off">
+            <div class="chips" id="chips-marca"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Motor</label>
+            <input type="text" id="f-motor" placeholder="ISX, N14, C15..." autocomplete="off">
+            <div class="chips" id="chips-motor"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Especificación (opcional)</label>
+            <input type="text" id="f-spec" placeholder="Café, c/EGR, c/elec..." autocomplete="off">
+            <div class="chips" id="chips-spec"></div>
+          </div>
+
+          <button class="btn-primary" onclick="guardarArnes()">💾 Guardar arnés <span class="kbd" style="background:rgba(255,255,255,.2);">Ctrl+Enter</span></button>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="content">
+
+      <div class="content-header">
+        <div class="content-title">📋 Listado de arneses</div>
+        <div class="content-actions">
+          <button class="btn-secondary" onclick="document.getElementById('buscador').focus()">🔍 Buscar <span style="opacity:.5; margin-left:4px;">/</span></button>
+          <button class="btn-secondary" onclick="document.getElementById('f-numero').focus()">➕ Nuevo <span style="opacity:.5; margin-left:4px;">N</span></button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats" id="stats"></div>
+
+      <!-- FILTROS -->
+      <div class="filters">
+        <button class="filter-btn active" data-filtro="TODOS" onclick="setFiltro('TODOS')">Todos</button>
+        <button class="filter-btn" data-filtro="FABRICANTE" onclick="setFiltro('FABRICANTE')">🔧 Fabricante</button>
+        <button class="filter-btn" data-filtro="MOTOR" onclick="setFiltro('MOTOR')">⚙️ Motor</button>
+        <button class="filter-btn" data-filtro="INYECTOR" onclick="setFiltro('INYECTOR')">💉 Inyector</button>
+        <button class="filter-btn" data-filtro="SALIDOS" onclick="setFiltro('SALIDOS')">📤 Salidos</button>
+      </div>
+
+      <!-- GRID DE ZONAS -->
+      <div class="zones-grid" id="zones-grid"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Confirmar</h3>
+    <p id="modal-msg">¿Estás seguro?</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" id="modal-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Guardado</div>
+
+<script>
+// ============================================
+// DATOS INICIALES — 112 ARNESES PRECARGADOS
+// TUBO PRINCIPAL: 17 arneses (1-17)
+// TUBO CRUZADO: 14 arneses (1-14)
+// PARED 1: 30 arneses (1-30)
+// PARED 2: 51 arneses (1-51)
+// ============================================
+const ARNESES_INICIALES = [
+  // ─── TUBO PRINCIPAL — 17 ARNESES ─────────
+  { id: 1, numero: 1, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'KW', motor: 'C15', spec: 'Café', activo: true, fecha: '2026-05-15' },
+  { id: 2, numero: 2, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Max Force 13', motor: 'Prostar', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 3, numero: 3, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Cascadia', motor: 'DDC 15', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 4, numero: 4, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'Serie 60', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 5, numero: 5, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISM', spec: 'c/EGR', activo: true, fecha: '2026-05-15' },
+  { id: 6, numero: 6, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 7, numero: 7, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'KW', motor: '3406', spec: 'Café', activo: true, fecha: '2026-05-15' },
+  { id: 8, numero: 8, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'KW', motor: 'ISX 15', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 9, numero: 9, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Sterling', motor: 'DDC 5', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 10, numero: 10, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'KW', motor: 'ISX', spec: 'Café', activo: true, fecha: '2026-05-15' },
+  { id: 11, numero: 11, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'KW', motor: 'C15', spec: 'Café', activo: true, fecha: '2026-05-15' },
+  { id: 12, numero: 12, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'EGR', activo: true, fecha: '2026-05-15' },
+  { id: 13, numero: 13, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'C15', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 14, numero: 14, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISM', spec: 'c/EGR', activo: true, fecha: '2026-05-15' },
+  { id: 15, numero: 15, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Cascadia', motor: 'DDC 15', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 16, numero: 16, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'N14', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 17, numero: 17, zona: 'TUBO_PRINCIPAL', tipo: 'FABRICANTE', marca: 'Inter', motor: 'N14', spec: '', activo: true, fecha: '2026-05-15' },
+
+  // ─── TUBO CRUZADO — 14 ARNESES ─────────
+  { id: 18, numero: 18, zona: 'TUBO_CRUZADO', tipo: 'MOTOR', marca: 'Max Force', motor: '', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 19, numero: 19, zona: 'TUBO_CRUZADO', tipo: 'MOTOR', marca: 'Max Force', motor: '', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 20, numero: 20, zona: 'TUBO_CRUZADO', tipo: 'MOTOR', marca: '', motor: 'M11', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 21, numero: 21, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'KW', motor: 'ISX', spec: 'Café', activo: true, fecha: '2026-05-15' },
+  { id: 22, numero: 22, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 23, numero: 23, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'Sterling', motor: 'DDC 5', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 24, numero: 24, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'Serie 60', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 25, numero: 25, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'Prostar', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-15' },
+  { id: 26, numero: 26, zona: 'TUBO_CRUZADO', tipo: 'MOTOR', marca: '', motor: 'ISC', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 27, numero: 27, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'FLD 120', motor: 'N14', spec: 'c/elec', activo: true, fecha: '2026-05-15' },
+  { id: 28, numero: 28, zona: 'TUBO_CRUZADO', tipo: 'MOTOR', marca: '', motor: 'ISC', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 29, numero: 29, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'KW', motor: 'ISX', spec: 'Café', activo: true, fecha: '2026-05-15' },
+  { id: 30, numero: 30, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'N14', spec: '', activo: true, fecha: '2026-05-15' },
+  { id: 31, numero: 31, zona: 'TUBO_CRUZADO', tipo: 'FABRICANTE', marca: 'KW', motor: 'Serie 60', spec: '', activo: true, fecha: '2026-05-15' },
+
+  // ─── PARED 1 — 30 ARNESES (8 MOTOR + 22 FABRICANTE) ─────────
+  { id: 32, numero: 1, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 33, numero: 2, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'KW', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 34, numero: 3, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'KW', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 35, numero: 4, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Columbia', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 36, numero: 5, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'Max Force 13', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 37, numero: 6, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'KW Café', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 38, numero: 7, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 39, numero: 8, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 40, numero: 9, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'KW Café', motor: 'C15', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 41, numero: 10, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 42, numero: 11, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 43, numero: 12, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 44, numero: 13, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'FLD 120', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 45, numero: 14, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 46, numero: 15, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Peterbilt', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 47, numero: 16, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Columbia', motor: 'DDC 5', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 48, numero: 17, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Prostar', motor: 'DDC 15', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 49, numero: 18, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'FLD 120', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 50, numero: 19, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'Max Force 13', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 51, numero: 20, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 52, numero: 21, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 53, numero: 22, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 54, numero: 23, zona: 'PARED_1', tipo: 'MOTOR', marca: '', motor: 'M11', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 55, numero: 24, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'FLD 120', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 56, numero: 25, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'KW Café', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 57, numero: 26, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Sterling', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 58, numero: 27, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 59, numero: 28, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'KW Café', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 60, numero: 29, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Inter', motor: 'N14', spec: 'Celect', activo: true, fecha: '2026-05-20' },
+  { id: 61, numero: 30, zona: 'PARED_1', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+
+  // ─── PARED 2 — 51 ARNESES (11 MOTOR + 3 INYECTOR + 37 FABRICANTE) ─────────
+  { id: 62, numero: 1, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'FL 120', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 63, numero: 2, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'DDC V', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 64, numero: 3, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 65, numero: 4, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Prostar', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 66, numero: 5, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'Mercedes', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 67, numero: 6, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'M4', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 68, numero: 7, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Prostar', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 69, numero: 8, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Cascadia', motor: 'DD15', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 70, numero: 9, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 71, numero: 10, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 72, numero: 11, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'KW', motor: 'ISX', spec: 'Café', activo: true, fecha: '2026-05-20' },
+  { id: 73, numero: 12, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'Cat C12', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 74, numero: 13, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'ISC', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 75, numero: 14, zona: 'PARED_2', tipo: 'INYECTOR', marca: '', motor: 'M11', spec: '10 piezas', activo: true, fecha: '2026-05-20' },
+  { id: 76, numero: 15, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Prostar', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 77, numero: 16, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 78, numero: 17, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Freightliner', motor: 'Cat C7', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 79, numero: 18, zona: 'PARED_2', tipo: 'INYECTOR', marca: '', motor: 'M11', spec: '10 piezas', activo: true, fecha: '2026-05-20' },
+  { id: 80, numero: 19, zona: 'PARED_2', tipo: 'INYECTOR', marca: '', motor: 'M11', spec: '10 piezas', activo: true, fecha: '2026-05-20' },
+  { id: 81, numero: 20, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 82, numero: 21, zona: 'PARED_2', tipo: 'MOTOR', marca: 'Navistar', motor: 'I313', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 83, numero: 22, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 84, numero: 23, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 85, numero: 24, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'FLD 120', motor: 'Cat 3406', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 86, numero: 25, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Columbia', motor: 'Serie 60', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 87, numero: 26, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 88, numero: 27, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 89, numero: 28, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Prostar', motor: 'ISX 15', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 90, numero: 29, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'ISB', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 91, numero: 30, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'ISB', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 92, numero: 31, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Cascadia', motor: 'DDC 15', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 93, numero: 32, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Sterling', motor: 'DDC 5', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 94, numero: 33, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 95, numero: 34, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 96, numero: 35, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'KW', motor: 'Cat 3406', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 97, numero: 36, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'Navistar', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 98, numero: 37, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 99, numero: 38, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 100, numero: 39, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'ISX 15', spec: '2 conectores', activo: true, fecha: '2026-05-20' },
+  { id: 101, numero: 40, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'FLD 120', motor: 'ISC', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 102, numero: 41, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Columbia', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 103, numero: 42, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'ISX 15', spec: '1 conector', activo: true, fecha: '2026-05-20' },
+  { id: 104, numero: 43, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Prostar', motor: 'DDC 15', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 105, numero: 44, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Inter', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 106, numero: 45, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'Max Force', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 107, numero: 46, zona: 'PARED_2', tipo: 'MOTOR', marca: '', motor: 'Max Force 13', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 108, numero: 47, zona: 'PARED_2', tipo: 'FABRICANTE', marca: '', motor: 'ISX', spec: 'c/EGR', activo: true, fecha: '2026-05-20' },
+  { id: 109, numero: 48, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'KW', motor: 'Serie 60', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 110, numero: 49, zona: 'PARED_2', tipo: 'FABRICANTE', marca: '', motor: 'ISX', spec: 'GT', activo: true, fecha: '2026-05-20' },
+  { id: 111, numero: 50, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'KW T300', motor: 'ISX', spec: '', activo: true, fecha: '2026-05-20' },
+  { id: 112, numero: 51, zona: 'PARED_2', tipo: 'FABRICANTE', marca: 'Volvo', motor: 'N14', spec: '', activo: true, fecha: '2026-05-20' }
+];
+
+const ZONAS = {
+  'TUBO_PRINCIPAL': 'Tubo principal',
+  'TUBO_CRUZADO': 'Tubo cruzado',
+  'PARED_1': 'Pared 1',
+  'PARED_2': 'Pared 2',
+  'PARED_3': 'Pared 3',
+  'PARED_4': 'Pared 4'
+};
+
+const CHIPS_MARCA_BASE = ['KW', 'KW Café', 'Inter', 'Cascadia', 'Volvo', 'Sterling', 'Prostar', 'Columbia', 'FLD 120', 'FL 120', 'Freightliner', 'Peterbilt', 'Navistar'];
+const CHIPS_MOTOR_BASE = ['ISX', 'ISX 15', 'N14', 'C15', 'ISM', 'ISC', 'ISB', 'DDC 5', 'DDC 15', 'DD15', 'DDC V', 'Serie 60', 'M11', 'M4', 'Cat 3406', 'Cat C12', 'Cat C7', '3406', 'Max Force', 'Max Force 13', 'Navistar', 'I313', 'Mercedes'];
+const CHIPS_SPEC_BASE = ['Café', 'c/EGR', 'c/elec', 'Celect', 'GT', '10 piezas', '2 conectores', '1 conector'];
+
+let CHIPS_MARCA = [...CHIPS_MARCA_BASE];
+let CHIPS_MOTOR = [...CHIPS_MOTOR_BASE];
+let CHIPS_SPEC = [...CHIPS_SPEC_BASE];
+
+// ============================================
+// ESTADO
+// ============================================
+let arneses = [];
+let confirmCallback = null;
+let tipoSeleccionado = 'FABRICANTE';
+let filtroActivo = 'TODOS';
+
+// ============================================
+// 🔥 FIREBASE — SINCRONIZACIÓN EN TIEMPO REAL
+// ============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyD_n0QMgSm5RVNDW4qhTKLH8oSXzsistcg",
+  authDomain: "arneses.firebaseapp.com",
+  databaseURL: "https://arneses-default-rtdb.firebaseio.com",
+  projectId: "arneses",
+  storageBucket: "arneses.firebasestorage.app",
+  messagingSenderId: "105196603545",
+  appId: "1:105196603545:web:1484d5595cf6cd870c5008"
+};
+
+// Inicializar Firebase
+let fbApp, fbDb, fbRef;
+let firebaseListo = false;
+let firebaseOnline = false;
+try {
+  fbApp = firebase.initializeApp(firebaseConfig);
+  fbDb = firebase.database();
+  fbRef = fbDb.ref('arneses_v3');
+  firebaseListo = true;
+} catch (e) {
+  console.error('Firebase init error:', e);
+}
+
+// ID único de esta computadora (para no reaccionar a nuestros propios cambios)
+const DEVICE_ID = (function() {
+  let id = localStorage.getItem('arneses_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('arneses_device_id', id);
+  }
+  return id;
+})();
+
+let ultimoWriteId = null; // Para ignorar nuestro propio eco
+
+// ============================================
+// CARGA Y MIGRACIÓN
+// ============================================
+const STORAGE_KEY = 'arneses_taller_v3'; // Solo se usa como caché offline
+
+function cargarDatos() {
+  // Cargar caché local primero (para arranque instantáneo)
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        arneses = parsed;
+        migrarDatos();
+      }
+    } catch (e) {}
+  }
+  if (!arneses || !arneses.length) {
+    arneses = [...ARNESES_INICIALES];
+  }
+
+  // Conectar a Firebase
+  if (firebaseListo) {
+    setSyncStatus('connecting', 'Conectando…');
+
+    // Detectar conexión
+    fbDb.ref('.info/connected').on('value', snap => {
+      firebaseOnline = snap.val() === true;
+      if (firebaseOnline) {
+        setSyncStatus('online', 'Sincronizado');
+      } else {
+        setSyncStatus('offline', 'Sin conexión');
+      }
+    });
+
+    // Escuchar cambios en tiempo real
+    fbRef.on('value', snap => {
+      const data = snap.val();
+      if (!data || !data.arneses) {
+        // Base vacía → subir los datos iniciales
+        subirAFirebase();
+        return;
+      }
+      // Ignorar el eco de nuestro propio write
+      if (data.lastWriteBy === DEVICE_ID && data.writeId === ultimoWriteId) {
+        return;
+      }
+      // Actualizar datos con lo que hay en Firebase
+      arneses = data.arneses;
+      migrarDatos();
+      guardarCache();
+      renderListado();
+      if (typeof aprenderChips === 'function') { aprenderChips(); renderChips(); }
+    }, err => {
+      console.error('Firebase read error:', err);
+      setSyncStatus('offline', 'Error de conexión');
+    });
+  } else {
+    setSyncStatus('offline', 'Firebase no disponible');
+  }
+}
+
+function migrarDatos() {
+  let cambios = false;
+  arneses.forEach(a => {
+    if (!a.tipo) {
+      const inicial = ARNESES_INICIALES.find(i => i.id === a.id);
+      if (inicial) { a.tipo = inicial.tipo; }
+      else if (a.motor === 'Motor' || a.marca === '—') {
+        a.tipo = 'MOTOR';
+        if (a.motor === 'Motor') a.motor = '';
+        if (a.marca === '—') a.marca = '';
+      } else { a.tipo = 'FABRICANTE'; }
+      cambios = true;
+    }
+  });
+  if (cambios) guardarCache();
+}
+
+function reiniciarDatos() {
+  abrirModal(
+    '⚠️ Reiniciar datos',
+    'Esto reemplazará TODOS los arneses (en TODAS las computadoras) con los 112 originales. ¿Estás seguro?',
+    () => {
+      arneses = JSON.parse(JSON.stringify(ARNESES_INICIALES));
+      CHIPS_MARCA = [...CHIPS_MARCA_BASE];
+      CHIPS_MOTOR = [...CHIPS_MOTOR_BASE];
+      CHIPS_SPEC = [...CHIPS_SPEC_BASE];
+      guardarLocal();
+      renderListado();
+      renderChips();
+      toast('✓ Datos reiniciados a los 112 originales', 'success');
+    }
+  );
+}
+
+function guardarCache() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arneses)); } catch(e) {}
+}
+
+function subirAFirebase() {
+  if (!firebaseListo) return;
+  ultimoWriteId = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  fbRef.set({
+    arneses: arneses,
+    lastWriteBy: DEVICE_ID,
+    writeId: ultimoWriteId,
+    updatedAt: new Date().toISOString()
+  }).catch(err => {
+    console.error('Firebase write error:', err);
+    setSyncStatus('offline', 'Error al guardar');
+  });
+}
+
+// guardarLocal ahora es "guardar en todo" (cache + Firebase)
+function guardarLocal() {
+  guardarCache();
+  subirAFirebase();
+}
+
+function setSyncStatus(estado, texto) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.className = 'sync-badge sync-' + estado;
+  const txt = el.querySelector('.sync-txt');
+  if (txt) txt.textContent = texto;
+}
+
+// ============================================
+// RENDER
+// ============================================
+function descripcion(a) {
+  return [a.marca, a.motor, a.spec].filter(p => p && p.trim() && p !== '—').join(' – ');
+}
+
+function renderListado() {
+  const cont = document.getElementById('zones-grid');
+  let lista = arneses;
+
+  if (filtroActivo === 'SALIDOS') {
+    lista = arneses.filter(a => !a.activo);
+  } else {
+    lista = arneses.filter(a => a.activo);
+    if (filtroActivo === 'FABRICANTE') lista = lista.filter(a => (a.tipo || 'FABRICANTE') === 'FABRICANTE');
+    if (filtroActivo === 'MOTOR') lista = lista.filter(a => a.tipo === 'MOTOR');
+    if (filtroActivo === 'INYECTOR') lista = lista.filter(a => a.tipo === 'INYECTOR');
+  }
+
+  if (!lista.length) {
+    cont.innerHTML = `<div style="grid-column: 1/-1; background:#fff; padding:50px; text-align:center; color:#9ca3af; border-radius:12px; border:1px dashed #e5e7eb;">📭 Sin arneses en este filtro</div>`;
+    renderStats();
+    return;
+  }
+
+  const porZona = {};
+  Object.keys(ZONAS).forEach(z => porZona[z] = []);
+  lista.forEach(a => { if (porZona[a.zona]) porZona[a.zona].push(a); });
+
+  let html = '';
+  for (const zona of Object.keys(ZONAS)) {
+    const items = porZona[zona].sort((a, b) => a.numero - b.numero);
+    // No mostrar zonas vacías (excepto en filtro SALIDOS donde sí queremos verlas)
+    if (!items.length && filtroActivo !== 'SALIDOS') continue;
+    html += `
+      <div class="zone-block">
+        <div class="zone-header">
+          <span class="zone-name">📍 ${ZONAS[zona]}</span>
+          <span class="zone-count">${items.length}</span>
+        </div>
+        <div class="zone-items">
+          ${items.length ? items.map(a => {
+            const tipo = a.tipo || 'FABRICANTE';
+            const claseRow = tipo === 'MOTOR' ? 'motor' : tipo === 'INYECTOR' ? 'inyector' : 'fabricante';
+            const claseTag = tipo === 'MOTOR' ? 'mot' : tipo === 'INYECTOR' ? 'iny' : 'fab';
+            const labelTag = tipo === 'MOTOR' ? '⚙️ Motor' : tipo === 'INYECTOR' ? '💉 Inyector' : '🔧 Fab.';
+            return `
+              <div class="arnes-row ${claseRow}" data-id="${a.id}">
+                <div class="arnes-num">${a.numero}</div>
+                <div>
+                  <div class="arnes-desc">${descripcion(a) || '(sin descripción)'}</div>
+                  <div class="arnes-meta">
+                    <span class="tipo-tag ${claseTag}">${labelTag}</span>
+                    ${!a.activo ? '<span style="color:#9ca3af; font-style:italic;">SALIDO</span>' : ''}
+                  </div>
+                </div>
+                <div class="arnes-actions">
+                  ${a.activo ? `<button class="btn-icon danger" onclick="marcarSalida(${a.id})" title="Marcar salida">📤</button>` : ''}
+                  <button class="btn-icon danger" onclick="eliminar(${a.id})" title="Eliminar">✕</button>
+                </div>
+              </div>
+            `;
+          }).join('') : '<div class="empty-zone">— Vacío —</div>'}
+        </div>
+      </div>
+    `;
+  }
+
+  cont.innerHTML = html;
+  renderStats();
+}
+
+function renderStats() {
+  const activos = arneses.filter(a => a.activo);
+  const fab = activos.filter(a => (a.tipo || 'FABRICANTE') === 'FABRICANTE').length;
+  const mot = activos.filter(a => a.tipo === 'MOTOR').length;
+  const iny = activos.filter(a => a.tipo === 'INYECTOR').length;
+  const sal = arneses.filter(a => !a.activo).length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="stat-val tot">${activos.length}</div><div class="stat-lbl">Total activos</div></div>
+    <div class="stat-card"><div class="stat-val fab">${fab}</div><div class="stat-lbl">🔧 Fabricante</div></div>
+    <div class="stat-card"><div class="stat-val mot">${mot}</div><div class="stat-lbl">⚙️ Motor</div></div>
+    <div class="stat-card"><div class="stat-val iny">${iny}</div><div class="stat-lbl">💉 Inyector</div></div>
+    <div class="stat-card"><div class="stat-val sal">${sal}</div><div class="stat-lbl">📤 Salidos</div></div>
+  `;
+}
+
+// ============================================
+// CHIPS APRENDIDOS
+// ============================================
+function aprenderChips() {
+  const M = new Set(CHIPS_MARCA_BASE), Mo = new Set(CHIPS_MOTOR_BASE), S = new Set(CHIPS_SPEC_BASE);
+  arneses.forEach(a => {
+    if (a.marca && a.marca.trim() && a.marca !== '—') M.add(a.marca.trim());
+    if (a.motor && a.motor.trim() && a.motor !== 'Motor') Mo.add(a.motor.trim());
+    if (a.spec && a.spec.trim()) S.add(a.spec.trim());
+  });
+  CHIPS_MARCA = [...CHIPS_MARCA_BASE, ...[...M].filter(x => !CHIPS_MARCA_BASE.includes(x)).sort()];
+  CHIPS_MOTOR = [...CHIPS_MOTOR_BASE, ...[...Mo].filter(x => !CHIPS_MOTOR_BASE.includes(x)).sort()];
+  CHIPS_SPEC = [...CHIPS_SPEC_BASE, ...[...S].filter(x => !CHIPS_SPEC_BASE.includes(x)).sort()];
+}
+
+function renderChips() {
+  const render = (lista, base, fieldId) =>
+    lista.map(c => {
+      const esNuevo = !base.includes(c);
+      return `<button type="button" class="chip ${esNuevo ? 'new' : ''}" onclick="setField('${fieldId}','${c.replace(/'/g,"\\'")}')">${c}</button>`;
+    }).join('');
+  document.getElementById('chips-marca').innerHTML = render(CHIPS_MARCA, CHIPS_MARCA_BASE, 'f-marca');
+  document.getElementById('chips-motor').innerHTML = render(CHIPS_MOTOR, CHIPS_MOTOR_BASE, 'f-motor');
+  document.getElementById('chips-spec').innerHTML = render(CHIPS_SPEC, CHIPS_SPEC_BASE, 'f-spec');
+}
+
+function setField(id, val) {
+  document.getElementById(id).value = val;
+  // Marcar visualmente seleccionado
+  const chips = document.querySelectorAll(`#chips-${id.replace('f-','')} .chip`);
+  chips.forEach(c => c.classList.toggle('selected', c.textContent.trim().replace('✨ ','') === val));
+}
+
+// ============================================
+// BUSCADOR
+// ============================================
+// Quita acentos y pasa a minúsculas (para que "cafe" encuentre "Café")
+function normaliza(s) {
+  return (s == null ? '' : String(s)).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function buscar() {
+  const q = normaliza(document.getElementById('buscador').value.trim());
+  const cont = document.getElementById('resultado-busqueda');
+  if (!q) { cont.innerHTML = ''; return; }
+
+  const activos = arneses.filter(a => a.activo);
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const resultados = activos.filter(a => {
+    const tipoActual = a.tipo || 'FABRICANTE';
+    const tipoStr = tipoActual === 'MOTOR' ? 'motor' : tipoActual === 'INYECTOR' ? 'inyector' : 'fabricante';
+    const texto = normaliza(`${a.marca} ${a.motor} ${a.spec} ${ZONAS[a.zona] || ''} #${a.numero} ${tipoStr}`);
+    return tokens.every(t => texto.includes(t));
+  });
+
+  if (!resultados.length) {
+    cont.innerHTML = `<div class="result-card empty"><div class="label">Sin resultados</div><div class="ubicacion">No encontrado</div><div class="descripcion">Prueba otra palabra</div></div>`;
+    return;
+  }
+
+  const labelTipo = (t) => t === 'MOTOR' ? '⚙️ Arnés de MOTOR' : t === 'INYECTOR' ? '💉 Arnés de INYECTOR' : '🔧 Arnés de FABRICANTE';
+  const iconTipo = (t) => t === 'MOTOR' ? '⚙️' : t === 'INYECTOR' ? '💉' : '🔧';
+
+  if (resultados.length === 1) {
+    const r = resultados[0];
+    const tipoR = r.tipo || 'FABRICANTE';
+    const claseTipo = tipoR === 'MOTOR' ? 'motor' : tipoR === 'INYECTOR' ? 'inyector' : '';
+    cont.innerHTML = `
+      <div class="result-card ${claseTipo}">
+        <div class="label">📍 ${labelTipo(tipoR)}</div>
+        <div class="ubicacion">${ZONAS[r.zona]} · #${r.numero}</div>
+        <div class="descripcion">${descripcion(r)}</div>
+      </div>`;
+  } else {
+    cont.innerHTML = `
+      <div class="result-card">
+        <div class="label">🎯 ${resultados.length} coincidencias</div>
+        ${resultados.slice(0, 6).map(r => {
+          const tipoR = r.tipo || 'FABRICANTE';
+          return `<div class="result-mini" onclick="resaltarArnes(${r.id})">
+            <div class="ub">${ZONAS[r.zona]} · #${r.numero} ${iconTipo(tipoR)}</div>
+            <div class="desc">${descripcion(r)}</div>
+          </div>`;
+        }).join('')}
+        ${resultados.length > 6 ? `<div style="font-size:11px; opacity:.8; margin-top:6px; text-align:center;">+ ${resultados.length - 6} más</div>` : ''}
+      </div>`;
+  }
+}
+
+function resaltarArnes(id) {
+  const row = document.querySelector(`[data-id="${id}"]`);
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.style.transition = 'background .3s';
+    row.style.background = '#fef3c7';
+    setTimeout(() => { row.style.background = ''; }, 1500);
+  }
+}
+
+// ============================================
+// CRUD
+// ============================================
+function setFiltro(f) {
+  filtroActivo = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filtro === f));
+  renderListado();
+}
+
+function setTipo(t) {
+  tipoSeleccionado = t;
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.tipo === t));
+}
+
+function updateNumeroSugerido() {
+  const zona = document.getElementById('f-zona').value;
+  const enZona = arneses.filter(a => a.activo && a.zona === zona);
+  const maxNum = enZona.length ? Math.max(...enZona.map(a => a.numero)) : 0;
+  document.getElementById('f-numero').placeholder = `Sugerido: ${maxNum + 1}`;
+}
+
+function guardarArnes() {
+  const zona = document.getElementById('f-zona').value;
+  const numero = parseInt(document.getElementById('f-numero').value);
+  const marca = document.getElementById('f-marca').value.trim();
+  const motor = document.getElementById('f-motor').value.trim();
+  const spec = document.getElementById('f-spec').value.trim();
+
+  if (!numero || numero < 1) { toast('Pon un número de ubicación', 'error'); document.getElementById('f-numero').focus(); return; }
+  if (!marca && !motor) { toast('Pon al menos marca o motor', 'error'); document.getElementById('f-marca').focus(); return; }
+
+  const dup = arneses.find(a => a.activo && a.zona === zona && a.numero === numero);
+  if (dup) { toast(`Ya existe un arnés en ${ZONAS[zona]} #${numero}`, 'error'); return; }
+
+  const nuevoId = arneses.length ? Math.max(...arneses.map(a => a.id)) + 1 : 1;
+  arneses.push({ id: nuevoId, numero, zona, tipo: tipoSeleccionado, marca, motor, spec, activo: true, fecha: new Date().toISOString().slice(0, 10) });
+
+  guardarLocal();
+  aprenderChips();
+  renderListado();
+  renderChips();
+  toast(`✓ Arnés guardado en ${ZONAS[zona]} #${numero}`, 'success');
+
+  // Limpiar form (mantener zona y tipo para captura rápida en serie)
+  document.getElementById('f-numero').value = '';
+  document.getElementById('f-marca').value = '';
+  document.getElementById('f-motor').value = '';
+  document.getElementById('f-spec').value = '';
+  updateNumeroSugerido();
+  document.getElementById('f-numero').focus();
+}
+
+function marcarSalida(id) {
+  const a = arneses.find(x => x.id === id);
+  if (!a) return;
+  confirmar(`¿Marcar salida del arnés ${ZONAS[a.zona]} #${a.numero}?`,
+    `${descripcion(a)}\n\nEl espacio quedará disponible para otro arnés.`,
+    () => {
+      a.activo = false;
+      a.fechaSalida = new Date().toISOString().slice(0, 10);
+      guardarLocal();
+      renderListado();
+      buscar();
+      toast('📤 Arnés marcado como salido', 'success');
+    });
+}
+
+function eliminar(id) {
+  const a = arneses.find(x => x.id === id);
+  if (!a) return;
+  confirmar(`¿Eliminar arnés ${ZONAS[a.zona]} #${a.numero}?`,
+    `${descripcion(a)}\n\nEsta acción no se puede deshacer.`,
+    () => {
+      arneses = arneses.filter(x => x.id !== id);
+      guardarLocal();
+      renderListado();
+      buscar();
+      toast('✓ Eliminado', 'success');
+    });
+}
+
+// ============================================
+// MODAL
+// ============================================
+function confirmar(title, msg, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-msg').textContent = msg;
+  document.getElementById('modal').classList.add('show');
+  confirmCallback = cb;
+}
+
+function cerrarModal() {
+  document.getElementById('modal').classList.remove('show');
+  confirmCallback = null;
+}
+
+document.getElementById('modal-confirm').onclick = () => {
+  if (confirmCallback) confirmCallback();
+  cerrarModal();
+};
+
+function mostrarMenuPeligroso() {
+  confirmar('⚠️ Opciones avanzadas',
+    'Elige una opción:\n\n• Aceptar = Restaurar los 112 arneses originales (Tubo Principal + Tubo Cruzado + Pared 1 + Pared 2)\n• Cancelar = Cerrar sin hacer nada\n\nSi quieres BORRAR TODO, primero exporta un respaldo (botón Respaldo arriba).',
+    () => {
+      confirmar('¿Restaurar 112 arneses originales?',
+        'Esto reemplazará TODOS los arneses actuales con los 112 originales (17 Tubo Principal + 14 Tubo Cruzado + 30 Pared 1 + 51 Pared 2).\n\nTu trabajo actual se perderá si no lo has exportado.',
+        () => {
+          arneses = JSON.parse(JSON.stringify(ARNESES_INICIALES));
+          guardarLocal();
+          aprenderChips();
+          renderListado();
+          renderChips();
+          toast('✓ 112 arneses restaurados', 'success');
+        });
+    });
+}
+
+// ============================================
+// EXPORTAR / IMPORTAR
+// ============================================
+function exportarExcel() {
+  const tipoStr = a => (a.tipo || 'FABRICANTE') === 'MOTOR' ? 'Motor' : 'Fabricante';
+  const header = ['Estado', 'Tipo', 'Zona', 'Número', 'Descripción', 'Marca', 'Motor', 'Especificación', 'Fecha entrada', 'Fecha salida'];
+  const rows = arneses.map(a => [
+    a.activo ? 'ACTIVO' : 'SALIDO', tipoStr(a), ZONAS[a.zona], a.numero,
+    descripcion(a), a.marca, a.motor, a.spec, a.fecha, a.fechaSalida || ''
+  ]);
+  const csv = '\uFEFF' + [header, ...rows].map(r =>
+    r.map(c => typeof c === 'string' && (c.includes(',') || c.includes('"')) ? `"${c.replace(/"/g, '""')}"` : c).join(',')
+  ).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `arneses_taller_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  toast('✓ Excel descargado', 'success');
+}
+
+function exportarPDF() {
+  const activos = arneses.filter(a => a.activo);
+  const fecha = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  const porZona = {};
+  Object.keys(ZONAS).forEach(z => porZona[z] = []);
+  activos.forEach(a => { if (porZona[a.zona]) porZona[a.zona].push(a); });
+
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Arneses Taller</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 24px; color: #1a1a1a; }
+      h1 { font-size: 22px; border-bottom: 3px solid #d62828; padding-bottom: 8px; }
+      .meta { color: #666; font-size: 13px; margin-bottom: 20px; }
+      h2 { font-size: 16px; color: #d62828; margin-top: 24px; padding: 8px 12px; background: #fee; border-radius: 6px; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th { background: #1a1a1a; color: #fff; padding: 8px; text-align: left; font-weight: 600; }
+      td { padding: 8px; border-bottom: 1px solid #eee; }
+      tr:nth-child(even) { background: #fafafa; }
+      .num { font-weight: 700; color: #d62828; width: 50px; }
+      .footer { margin-top: 30px; font-size: 11px; color: #888; text-align: center; }
+      @media print { body { padding: 12px; } h2 { break-inside: avoid; } tr { page-break-inside: avoid; } }
+    </style></head><body>
+    <h1>🔧 Arneses Taller — Tracto Partes Magaña</h1>
+    <div class="meta">Reporte generado el ${fecha} · Total activos: ${activos.length}</div>`;
+
+  for (const zona of Object.keys(ZONAS)) {
+    const lista = porZona[zona].sort((a, b) => a.numero - b.numero);
+    if (!lista.length) continue;
+    html += `<h2>📍 ${ZONAS[zona]} (${lista.length})</h2>
+      <table><thead><tr><th>#</th><th>Tipo</th><th>Marca</th><th>Motor</th><th>Especificación</th><th>Fecha</th></tr></thead><tbody>`;
+    lista.forEach(a => {
+      const esMotor = (a.tipo || 'FABRICANTE') === 'MOTOR';
+      const tipoLbl = esMotor ? '<span style="color:#b8860b; font-weight:700;">⚙️ MOTOR</span>' : '<span style="color:#d62828;">🔧 Fab.</span>';
+      html += `<tr><td class="num">${a.numero}</td><td>${tipoLbl}</td><td>${a.marca || '—'}</td><td>${a.motor || '—'}</td><td>${a.spec || '—'}</td><td>${a.fecha || '—'}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `<div class="footer">Tracto Partes Magaña · Col. Argentina, Monterrey N.L. · Sistema de Arneses v1.0</div>
+    <script>window.onload = () => window.print();<\/script></body></html>`;
+  const w = window.open('', '_blank');
+  w.document.write(html); w.document.close();
+  toast('✓ Abriendo PDF...', 'success');
+}
+
+function exportarJSON() {
+  const data = { version: '1.0', fecha_exportacion: new Date().toISOString(), total: arneses.length, arneses };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `respaldo_arneses_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  toast('✓ Respaldo descargado', 'success');
+}
+
+function importarJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.arneses || !Array.isArray(data.arneses)) throw new Error('Formato inválido');
+      confirmar('¿Importar respaldo?',
+        `Se reemplazarán los ${arneses.length} arneses actuales con ${data.arneses.length} del archivo.`,
+        () => {
+          arneses = data.arneses;
+          guardarLocal();
+          aprenderChips();
+          renderListado();
+          renderChips();
+          toast('✓ Respaldo importado', 'success');
+        });
+    } catch (err) { toast('Archivo inválido', 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ============================================
+// TOAST
+// ============================================
+function toast(msg, tipo = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${tipo}`;
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================
+// ATAJOS DE TECLADO
+// ============================================
+document.addEventListener('keydown', (e) => {
+  // Si está escribiendo en un input/textarea/select, solo capturar ciertos atajos
+  const activeTag = document.activeElement.tagName;
+  const enInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+  // Escape: cerrar modal o limpiar buscador
+  if (e.key === 'Escape') {
+    if (document.getElementById('modal').classList.contains('show')) {
+      cerrarModal();
+    } else if (document.getElementById('buscador').value) {
+      document.getElementById('buscador').value = '';
+      buscar();
+    }
+    document.activeElement.blur();
+    return;
+  }
+
+  // Ctrl+Enter desde cualquier campo del form: guardar
+  if (e.ctrlKey && e.key === 'Enter' && enInput) {
+    e.preventDefault();
+    guardarArnes();
+    return;
+  }
+
+  // Enter en cualquier input del form (excepto buscador): guardar
+  if (e.key === 'Enter' && enInput && document.activeElement.id.startsWith('f-')) {
+    e.preventDefault();
+    guardarArnes();
+    return;
+  }
+
+  if (enInput) return; // Demás atajos solo fuera de inputs
+
+  // / para enfocar buscador
+  if (e.key === '/') {
+    e.preventDefault();
+    document.getElementById('buscador').focus();
+  }
+  // N para enfocar nuevo arnés
+  if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault();
+    document.getElementById('f-numero').focus();
+  }
+});
+
+// ============================================
+// INIT
+// ============================================
+cargarDatos();
+aprenderChips();
+renderListado();
+renderChips();
+updateNumeroSugerido();
+document.getElementById('buscador').focus();
+</script>
+</body>
+</html>
