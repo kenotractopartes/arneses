@@ -186,6 +186,8 @@
 <!-- Firebase SDK (Realtime Database) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="tma-edicion-privada.js?v=20261106-1"></script>
 </head>
 <body>
 <!-- 🔒 CANDADO DE ACCESO (contraseña compartida) -->
@@ -263,9 +265,9 @@
       <button class="header-btn" onclick="exportarExcel()">📊 Excel</button>
       <button class="header-btn" onclick="exportarPDF()">📄 PDF</button>
       <button class="header-btn" onclick="exportarJSON()">💾 Respaldo</button>
-      <button class="header-btn" onclick="document.getElementById('importFile').click()">📥 Importar</button>
-      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
-      <button class="header-btn danger" onclick="mostrarMenuPeligroso()">⚠️</button>
+      <button data-tma-editar class="header-btn" onclick="document.getElementById('importFile').click()">📥 Importar</button>
+      <input data-tma-editar type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
+      <button data-tma-editar class="header-btn danger" onclick="mostrarMenuPeligroso()">⚠️</button>
     </div>
   </div>
 
@@ -304,7 +306,7 @@
           <div class="form-row-2">
             <div class="form-group">
               <label>Ubicación</label>
-              <select id="f-zona" onchange="updateNumeroSugerido()">
+              <select data-tma-editar id="f-zona" onchange="updateNumeroSugerido()">
                 <option value="TUBO_PRINCIPAL">Tubo principal</option>
                 <option value="TUBO_CRUZADO">Tubo cruzado</option>
                 <option value="PARED_1">Pared 1</option>
@@ -315,29 +317,29 @@
             </div>
             <div class="form-group">
               <label>Número</label>
-              <input type="number" id="f-numero" placeholder="32" min="1">
+              <input data-tma-editar type="number" id="f-numero" placeholder="32" min="1">
             </div>
           </div>
 
           <div class="form-group">
             <label>Marca</label>
-            <input type="text" id="f-marca" placeholder="KW, Inter, Cascadia..." autocomplete="off">
+            <input data-tma-editar type="text" id="f-marca" placeholder="KW, Inter, Cascadia..." autocomplete="off">
             <div class="chips" id="chips-marca"></div>
           </div>
 
           <div class="form-group">
             <label>Motor</label>
-            <input type="text" id="f-motor" placeholder="ISX, N14, C15..." autocomplete="off">
+            <input data-tma-editar type="text" id="f-motor" placeholder="ISX, N14, C15..." autocomplete="off">
             <div class="chips" id="chips-motor"></div>
           </div>
 
           <div class="form-group">
             <label>Especificación (opcional)</label>
-            <input type="text" id="f-spec" placeholder="Café, c/EGR, c/elec..." autocomplete="off">
+            <input data-tma-editar type="text" id="f-spec" placeholder="Café, c/EGR, c/elec..." autocomplete="off">
             <div class="chips" id="chips-spec"></div>
           </div>
 
-          <button class="btn-primary" onclick="guardarArnes()">💾 Guardar arnés <span class="kbd" style="background:rgba(255,255,255,.2);">Ctrl+Enter</span></button>
+          <button data-tma-editar class="btn-primary" onclick="guardarArnes()">💾 Guardar arnés <span class="kbd" style="background:rgba(255,255,255,.2);">Ctrl+Enter</span></button>
 
         </div>
       </div>
@@ -548,6 +550,13 @@ let filtroActivo = 'TODOS';
 // ============================================
 // 🔥 FIREBASE — SINCRONIZACIÓN EN TIEMPO REAL
 // ============================================
+// A blocked helper/SDK leaves consultation available and editing closed.
+if(!window.TMAEditor)window.TMAEditor={
+  iniciar(){const b=document.createElement('p');b.textContent='🔒 Consulta. No cargó el acceso de edición; conserva tus cambios y recarga con conexión.';document.body.prepend(b);},
+  puedeEditar:()=>false, permitir(){toast('No está disponible el acceso de edición. Recarga con conexión.','warn');return false;},
+  confirmarLectura(){}, guardar:()=>Promise.reject(new Error('Edición cerrada.'))
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyD_n0QMgSm5RVNDW4qhTKLH8oSXzsistcg",
   authDomain: "arneses.firebaseapp.com",
@@ -622,8 +631,8 @@ function cargarDatos() {
     fbRef.on('value', snap => {
       const data = snap.val();
       if (!data || !data.arneses) {
-        // Base vacía → subir los datos iniciales
-        subirAFirebase();
+        // Abrir la página no debe escribir datos en una nube vacía.
+        window.TMAEditor.confirmarLectura();
         return;
       }
       // Ignorar el eco de nuestro propio write
@@ -634,6 +643,7 @@ function cargarDatos() {
       arneses = data.arneses;
       migrarDatos();
       guardarCache();
+      window.TMAEditor.confirmarLectura();
       renderListado();
       if (typeof aprenderChips === 'function') { aprenderChips(); renderChips(); }
     }, err => {
@@ -663,6 +673,7 @@ function migrarDatos() {
 }
 
 function reiniciarDatos() {
+  if(!window.TMAEditor.permitir())return;
   abrirModal(
     '⚠️ Reiniciar datos',
     'Esto reemplazará TODOS los arneses (en TODAS las computadoras) con los 112 originales. ¿Estás seguro?',
@@ -684,14 +695,14 @@ function guardarCache() {
 }
 
 function subirAFirebase() {
-  if (!firebaseListo) return;
+  if (!firebaseListo || !window.TMAEditor.puedeEditar()) return;
   ultimoWriteId = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-  fbRef.set({
+  return window.TMAEditor.guardar(()=>fbRef.set({
     arneses: arneses,
     lastWriteBy: DEVICE_ID,
     writeId: ultimoWriteId,
     updatedAt: new Date().toISOString()
-  }).catch(err => {
+  })).catch(err => {
     console.error('Firebase write error:', err);
     setSyncStatus('offline', 'Error al guardar');
   });
@@ -699,6 +710,7 @@ function subirAFirebase() {
 
 // guardarLocal ahora es "guardar en todo" (cache + Firebase)
 function guardarLocal() {
+  if(!window.TMAEditor.permitir())return;
   guardarCache();
   subirAFirebase();
 }
@@ -769,8 +781,8 @@ function renderListado() {
                   </div>
                 </div>
                 <div class="arnes-actions">
-                  ${a.activo ? `<button class="btn-icon danger" onclick="marcarSalida(${a.id})" title="Marcar salida">📤</button>` : ''}
-                  <button class="btn-icon danger" onclick="eliminar(${a.id})" title="Eliminar">✕</button>
+                  ${a.activo ? `<button data-tma-editar class="btn-icon danger" onclick="marcarSalida(${a.id})" title="Marcar salida">📤</button>` : ''}
+                  <button data-tma-editar class="btn-icon danger" onclick="eliminar(${a.id})" title="Eliminar">✕</button>
                 </div>
               </div>
             `;
@@ -920,6 +932,7 @@ function updateNumeroSugerido() {
 }
 
 function guardarArnes() {
+  if(!window.TMAEditor.permitir())return;
   const zona = document.getElementById('f-zona').value;
   const numero = parseInt(document.getElementById('f-numero').value);
   const marca = document.getElementById('f-marca').value.trim();
@@ -951,6 +964,7 @@ function guardarArnes() {
 }
 
 function marcarSalida(id) {
+  if(!window.TMAEditor.permitir())return;
   const a = arneses.find(x => x.id === id);
   if (!a) return;
   confirmar(`¿Marcar salida del arnés ${ZONAS[a.zona]} #${a.numero}?`,
@@ -966,6 +980,7 @@ function marcarSalida(id) {
 }
 
 function eliminar(id) {
+  if(!window.TMAEditor.permitir())return;
   const a = arneses.find(x => x.id === id);
   if (!a) return;
   confirmar(`¿Eliminar arnés ${ZONAS[a.zona]} #${a.numero}?`,
@@ -983,6 +998,7 @@ function eliminar(id) {
 // MODAL
 // ============================================
 function confirmar(title, msg, cb) {
+  if(!window.TMAEditor.permitir())return;
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-msg').textContent = msg;
   document.getElementById('modal').classList.add('show');
@@ -995,11 +1011,12 @@ function cerrarModal() {
 }
 
 document.getElementById('modal-confirm').onclick = () => {
-  if (confirmCallback) confirmCallback();
+  if (confirmCallback && window.TMAEditor.permitir()) confirmCallback();
   cerrarModal();
 };
 
 function mostrarMenuPeligroso() {
+  if(!window.TMAEditor.permitir())return;
   confirmar('⚠️ Opciones avanzadas',
     'Elige una opción:\n\n• Aceptar = Restaurar los 112 arneses originales (Tubo Principal + Tubo Cruzado + Pared 1 + Pared 2)\n• Cancelar = Cerrar sin hacer nada\n\nSi quieres BORRAR TODO, primero exporta un respaldo (botón Respaldo arriba).',
     () => {
@@ -1090,11 +1107,13 @@ function exportarJSON() {
 }
 
 function importarJSON(event) {
+  if(!window.TMAEditor.permitir())return;
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
+      if(!window.TMAEditor.permitir())return;
       const data = JSON.parse(e.target.result);
       if (!data.arneses || !Array.isArray(data.arneses)) throw new Error('Formato inválido');
       confirmar('¿Importar respaldo?',
@@ -1174,6 +1193,7 @@ document.addEventListener('keydown', (e) => {
 // ============================================
 // INIT
 // ============================================
+window.TMAEditor.iniciar(fbApp);
 cargarDatos();
 aprenderChips();
 renderListado();
